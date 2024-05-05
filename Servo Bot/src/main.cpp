@@ -7,6 +7,16 @@ virtuabotixRTC clock(3, 4, 2);
 Adafruit_SH1106 display(-1);
 int state = 1;
 
+void drawUI() {
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setCursor(2, 2);
+  display.println(" Adam's  Clock  Sleep");
+  display.drawLine(0, 11, 128, 11, WHITE);
+  display.drawLine(94, 0, 94, 10, WHITE);
+  display.drawLine(26, 44, 102, 44, WHITE);
+}
+
 void setup() {
   pinMode(5, INPUT_PULLUP);
   display.begin(SH1106_SWITCHCAPVCC, 0x3C);
@@ -99,14 +109,4 @@ void loop() {
     display.display();
     delay(999);
   }
-}
-
-void drawUI() {
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setCursor(2, 2);
-  display.println(" Adam's  Clock  Sleep");
-  display.drawLine(0, 11, 128, 11, WHITE);
-  display.drawLine(94, 0, 94, 10, WHITE);
-  display.drawLine(26, 44, 102, 44, WHITE);
 }
