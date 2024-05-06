@@ -3,15 +3,15 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH1106.h>
 
-virtuabotixRTC clock(3, 4, 2);
-Adafruit_SH1106 display(-1);
+virtuabotixRTC myClock(3, 4, 2);
+Adafruit_SH1106 display(12, 14);
 int state = 1;
 
 void drawUI() {
   display.clearDisplay();
   display.setTextSize(1);
   display.setCursor(2, 2);
-  display.println(" Adam's  Clock  Sleep");
+  display.println(" Handshakes's  myClock  Sleep");
   display.drawLine(0, 11, 128, 11, WHITE);
   display.drawLine(94, 0, 94, 10, WHITE);
   display.drawLine(26, 44, 102, 44, WHITE);
@@ -37,7 +37,7 @@ void loop() {
       display.fillRect(5, 8, 118, 48, BLACK);
       display.setTextSize(1);
       display.setCursor(6, 12);
-      display.println("Clock will turn");
+      display.println("myClock will turn");
       display.println(" off in a moment.");
       display.println("");
       display.println(" To turn back on,");
@@ -51,61 +51,61 @@ void loop() {
   }
 
   if (state == 1) {
-    clock.updateTime();
+    myClock.updateTime();
     drawUI();
     display.setTextColor(WHITE);
     display.setTextSize(3);
     display.setCursor(1, 19);
-    if (clock.hours < 10) {
+    if (myClock.hours < 10) {
       display.print("0");
     }
-    display.print(clock.hours);
+    display.print(myClock.hours);
     display.print(":");
-    if (clock.minutes < 10) {
+    if (myClock.minutes < 10) {
       display.print("0");
     }
-    display.print(clock.minutes);
+    display.print(myClock.minutes);
     display.setTextSize(2);
     display.print(":");
-    if (clock.seconds < 10) {
+    if (myClock.seconds < 10) {
       display.print("0");
     }
-    display.print(clock.seconds);
+    display.print(myClock.seconds);
     display.setTextSize(1);
     display.setCursor(26, 48);
-    if (clock.dayofweek == 1) {
+    if (myClock.dayofweek == 1) {
       display.print("Monday,");
     }
-    if (clock.dayofweek == 2) {
+    if (myClock.dayofweek == 2) {
       display.print("Tuesday,");
     }
-    if (clock.dayofweek == 3) {
+    if (myClock.dayofweek == 3) {
       display.print("Wednesday,");
     }
-    if (clock.dayofweek == 4) {
+    if (myClock.dayofweek == 4) {
       display.print("Thursday,");
     }
-    if (clock.dayofweek == 5) {
+    if (myClock.dayofweek == 5) {
       display.print("Friday,");
     }
-    if (clock.dayofweek == 6) {
+    if (myClock.dayofweek == 6) {
       display.print("Saturday,");
     }
-    if (clock.dayofweek == 7) {
+    if (myClock.dayofweek == 7) {
       display.print("Sunday,");
     }
     display.setCursor(26, 56);
-    if (clock.dayofmonth < 10) {
+    if (myClock.dayofmonth < 10) {
       display.print("0");
     }
-    display.print(clock.dayofmonth);
+    display.print(myClock.dayofmonth);
     display.print(".");
-    if (clock.month < 10) {
+    if (myClock.month < 10) {
       display.print("0");
     }
-    display.print(clock.month);
+    display.print(myClock.month);
     display.print(".");
-    display.print(clock.year);
+    display.print(myClock.year);
     display.display();
     delay(999);
   }
