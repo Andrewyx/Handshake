@@ -4,7 +4,7 @@
 #include <Adafruit_SH1106.h>
 
 virtuabotixRTC myClock(3, 4, 2);
-Adafruit_SH1106 display(12, 14);
+Adafruit_SH1106 display(21, 22);
 int state = 1;
 
 void drawUI() {
