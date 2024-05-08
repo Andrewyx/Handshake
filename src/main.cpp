@@ -1,23 +1,92 @@
+#include <Arduino.h>
 #include <Wire.h>
 #include <virtuabotixRTC.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH1106.h>
 
+#if defined(ESP32)
+  #include <WiFi.h>
+#elif defined(ESP8266)
+  #include <ESP8266WiFi.h>
+#endif
+#include <Firebase_ESP_Client.h>
+
+//Provide the token generation process info.
+#include "addons/TokenHelper.h"
+//Provide the RTDB payload printing info and other helper functions.
+#include "addons/RTDBHelper.h"
+
+// Insert your network credentials
+#define WIFI_SSID "TELUS3280"
+#define WIFI_PASSWORD "m3BcxPDvF4F2"
+
+// Insert Firebase project API Key
+#define API_KEY "AIzaSyDqATxGy0ATTYjuo-K6fOB9AUAG1AWzspU"
+
+// Insert RTDB URLefine the RTDB URL */
+#define DATABASE_URL "https://handshake-664b7-default-rtdb.firebaseio.com/" 
+
 virtuabotixRTC myClock(3, 4, 2);
 Adafruit_SH1106 display(21, 22);
 int state = 1;
+
+//Define Firebase Data object
+FirebaseData fbdo;
+
+FirebaseAuth auth;
+FirebaseConfig config;
+
+unsigned long sendDataPrevMillis = 0;
+int count = 0;
+bool signupOK = false;
+float leftMotorNum;
+float rightMotorNum;
+
 
 void drawUI() {
   display.clearDisplay();
   display.setTextSize(1);
   display.setCursor(2, 2);
-  display.println(" Handshakes's  myClock  Sleep");
+  display.println(" Handshakes's  Clock  Sleep");
   display.drawLine(0, 11, 128, 11, WHITE);
   display.drawLine(94, 0, 94, 10, WHITE);
   display.drawLine(26, 44, 102, 44, WHITE);
 }
 
-void setup() {
+void setup(){
+  Serial.begin(115200);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("Connecting to Wi-Fi");
+  while (WiFi.status() != WL_CONNECTED){
+    Serial.print(".");
+    delay(300);
+  }
+  Serial.println();
+  Serial.print("Connected with IP: ");
+  Serial.println(WiFi.localIP());
+  Serial.println();
+
+  /* Assign the api key (required) */
+  config.api_key = API_KEY;
+
+  /* Assign the RTDB URL (required) */
+  config.database_url = DATABASE_URL;
+
+  /* Sign up */
+  if (Firebase.signUp(&config, &auth, "", "")){
+    Serial.println("ok");
+    signupOK = true;
+  }
+  else{
+    Serial.printf("%s\n", config.signer.signupError.message.c_str());
+  }
+
+  /* Assign the callback function for the long running token generation task */
+  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+  
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectWiFi(true);
+
   pinMode(5, INPUT_PULLUP);
   display.begin(SH1106_SWITCHCAPVCC, 0x3C);
   display.setTextColor(WHITE);
@@ -26,87 +95,49 @@ void setup() {
 }
 
 void loop() {
-  if (digitalRead(5) == LOW) {
-    if (state == 0) {
-      delay(500);
-      drawUI();
-      state = 1;
-    }else{
-      delay(500);
-      display.drawRect(4, 7, 120, 50, WHITE);
-      display.fillRect(5, 8, 118, 48, BLACK);
-      display.setTextSize(1);
-      display.setCursor(6, 12);
-      display.println("myClock will turn");
-      display.println(" off in a moment.");
-      display.println("");
-      display.println(" To turn back on,");
-      display.println(" press the button.");
-      display.display();
-      delay(3000);
-      display.clearDisplay();
-      display.display();
-      state = 0;
-    }
-  }
 
-  if (state == 1) {
+
+    if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0)){
+    sendDataPrevMillis = millis();
+    leftMotorNum = random(0,360);
+    rightMotorNum = random(0,360);
+    
     myClock.updateTime();
     drawUI();
     display.setTextColor(WHITE);
-    display.setTextSize(3);
-    display.setCursor(1, 19);
-    if (myClock.hours < 10) {
-      display.print("0");
-    }
-    display.print(myClock.hours);
-    display.print(":");
-    if (myClock.minutes < 10) {
-      display.print("0");
-    }
-    display.print(myClock.minutes);
-    display.setTextSize(2);
-    display.print(":");
-    if (myClock.seconds < 10) {
-      display.print("0");
-    }
-    display.print(myClock.seconds);
     display.setTextSize(1);
-    display.setCursor(26, 48);
-    if (myClock.dayofweek == 1) {
-      display.print("Monday,");
-    }
-    if (myClock.dayofweek == 2) {
-      display.print("Tuesday,");
-    }
-    if (myClock.dayofweek == 3) {
-      display.print("Wednesday,");
-    }
-    if (myClock.dayofweek == 4) {
-      display.print("Thursday,");
-    }
-    if (myClock.dayofweek == 5) {
-      display.print("Friday,");
-    }
-    if (myClock.dayofweek == 6) {
-      display.print("Saturday,");
-    }
-    if (myClock.dayofweek == 7) {
-      display.print("Sunday,");
-    }
-    display.setCursor(26, 56);
-    if (myClock.dayofmonth < 10) {
-      display.print("0");
-    }
-    display.print(myClock.dayofmonth);
-    display.print(".");
-    if (myClock.month < 10) {
-      display.print("0");
-    }
-    display.print(myClock.month);
-    display.print(".");
-    display.print(myClock.year);
+    display.setCursor(1, 19);
+    display.print("Right: ");
+    display.print(rightMotorNum);
+    display.print("Left: ");
+    display.print(leftMotorNum);
     display.display();
-    delay(999);
+    // Write an Float number on the database path robots/leftmotor
+    if (Firebase.RTDB.setInt(&fbdo, "robots/leftmotor", leftMotorNum)){
+      Serial.println("PASSED");
+      Serial.print("PATH: ");
+      Serial.println(fbdo.dataPath());
+      Serial.print("TYPE: ");
+      Serial.println(fbdo.dataType());
+    }
+    else {
+      Serial.println("FAILED");
+      Serial.print("REASON: ");
+      Serial.println(fbdo.errorReason());
+    }
+    
+    // Write an Float number on the database path robots/rightmotor
+    if (Firebase.RTDB.setFloat(&fbdo, "robots/rightmotor", rightMotorNum)){
+      Serial.println("PASSED");
+      Serial.print("PATH: ");
+      Serial.println(fbdo.dataPath());
+      Serial.print("TYPE: "); 
+      Serial.println(fbdo.dataType());
+    }
+    else {
+      Serial.println("FAILED");
+      Serial.println("REASON: ");
+      Serial.println(fbdo.errorReason());
+    }
   }
 }
