@@ -1,4 +1,4 @@
-import { child, push, ref, update } from 'firebase/database';
+import { ref, update } from 'firebase/database';
 import FirebaseTools from './FirebaseTools';
 
 export default function ControlButton(props) {
@@ -16,7 +16,7 @@ export default function ControlButton(props) {
         update(ref(FIREBASE.db), updates);
     }
     function handleButtonUp() {
-        updates[pathRef.toString().substring(pathRef.root.toString().length-1)] = 0;
+        updates[pathRef.toString().substring(pathRef.root.toString().length-1)] = 90;
         update(ref(FIREBASE.db), updates);
     }
 

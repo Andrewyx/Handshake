@@ -3,18 +3,14 @@
 #include <virtuabotixRTC.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH1106.h>
+#include <FirebaseClient.h>
+#include <ESP32Servo.h>
 
 #if defined(ESP32)
   #include <WiFi.h>
 #elif defined(ESP8266)
   #include <ESP8266WiFi.h>
 #endif
-#include <Firebase_ESP_Client.h>
-
-//Provide the token generation process info.
-#include "addons/TokenHelper.h"
-//Provide the RTDB payload printing info and other helper functions.
-#include "addons/RTDBHelper.h"
 
 // Insert your network credentials
 #define WIFI_SSID "TELUS3280"
@@ -29,19 +25,34 @@
 virtuabotixRTC myClock(3, 4, 2);
 Adafruit_SH1106 display(21, 22);
 int state = 1;
+DefaultNetwork network;
+NoAuth no_auth;
+FirebaseApp app;
 
-//Define Firebase Data object
-FirebaseData fbdo;
+void asyncCB(AsyncResult &aResult);
 
-FirebaseAuth auth;
-FirebaseConfig config;
+void printResult(AsyncResult &aResult);
 
-unsigned long sendDataPrevMillis = 0;
-int count = 0;
-bool signupOK = false;
-float leftMotorNum;
-float rightMotorNum;
+#if defined(ESP32) || defined(ESP8266) || defined(ARDUINO_RASPBERRY_PI_PICO_W)
+#include <WiFiClientSecure.h>
+WiFiClientSecure ssl_client;
+#elif defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_UNOWIFIR4) || defined(ARDUINO_GIGA) || defined(ARDUINO_PORTENTA_C33) || defined(ARDUINO_NANO_RP2040_CONNECT)
+#include <WiFiSSLClient.h>
+WiFiSSLClient ssl_client;
+#endif
 
+using AsyncClient = AsyncClientClass;
+
+AsyncClient aClient(ssl_client, getNetwork(network));
+
+RealtimeDatabase Database;
+
+bool taskComplete = false;
+float leftMotorNum = 5;
+float rightMotorNum = 5;
+
+Servo leftServo;
+Servo rightServo;
 
 void drawUI() {
   display.clearDisplay();
@@ -56,88 +67,73 @@ void drawUI() {
 void setup(){
   Serial.begin(115200);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
   Serial.print("Connecting to Wi-Fi");
-  while (WiFi.status() != WL_CONNECTED){
-    Serial.print(".");
-    delay(300);
+  unsigned long ms = millis();
+  while (WiFi.status() != WL_CONNECTED)
+  {
+      Serial.print(".");
+      delay(300);
   }
   Serial.println();
   Serial.print("Connected with IP: ");
   Serial.println(WiFi.localIP());
   Serial.println();
 
-  /* Assign the api key (required) */
-  config.api_key = API_KEY;
-
-  /* Assign the RTDB URL (required) */
-  config.database_url = DATABASE_URL;
-
-  /* Sign up */
-  if (Firebase.signUp(&config, &auth, "", "")){
-    Serial.println("ok");
-    signupOK = true;
-  }
-  else{
-    Serial.printf("%s\n", config.signer.signupError.message.c_str());
-  }
-
-  /* Assign the callback function for the long running token generation task */
-  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+  Firebase.printf("Firebase Client v%s\n", FIREBASE_CLIENT_VERSION);
   
-  Firebase.begin(&config, &auth);
-  Firebase.reconnectWiFi(true);
+  Serial.println("Initializing app...");
 
+  #if defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)
+      ssl_client.setInsecure();
+  #if defined(ESP8266)
+      ssl_client.setBufferSizes(4096, 1024);
+  #endif
+  #endif
+
+  initializeApp(aClient, app, getAuth(no_auth));
+
+  app.getApp<RealtimeDatabase>(Database);
+
+  Database.url(DATABASE_URL);
+
+  Serial.println("App ready");
   pinMode(5, INPUT_PULLUP);
   display.begin(SH1106_SWITCHCAPVCC, 0x3C);
   display.setTextColor(WHITE);
   drawUI();
   display.display();
+
+  leftServo.attach(33);
+  rightServo.attach(32);
 }
 
 void loop() {
 
+    // The async task handler should run inside the main loop
+    // without blocking delay or bypassing with millis code blocks.
 
-    if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0)){
-    sendDataPrevMillis = millis();
-    leftMotorNum = random(0,360);
-    rightMotorNum = random(0,360);
-    
+    app.loop();
+
+    Database.loop();
+
+    if (app.ready() && !taskComplete)
+    {
+      leftMotorNum = static_cast<float>(Database.get(aClient, "/robots/leftmotor"));
+      rightMotorNum = static_cast<float>(Database.get(aClient, "/robots/rightmotor"));
+      leftServo.write(leftMotorNum);
+      rightServo.write(rightMotorNum);
+    }
+
     myClock.updateTime();
     drawUI();
     display.setTextColor(WHITE);
     display.setTextSize(1);
     display.setCursor(1, 19);
     display.print("Right: ");
-    display.print(rightMotorNum);
+    display.println(rightMotorNum);
     display.print("Left: ");
     display.print(leftMotorNum);
     display.display();
-    // Write an Float number on the database path robots/leftmotor
-    if (Firebase.RTDB.setInt(&fbdo, "robots/leftmotor", leftMotorNum)){
-      Serial.println("PASSED");
-      Serial.print("PATH: ");
-      Serial.println(fbdo.dataPath());
-      Serial.print("TYPE: ");
-      Serial.println(fbdo.dataType());
-    }
-    else {
-      Serial.println("FAILED");
-      Serial.print("REASON: ");
-      Serial.println(fbdo.errorReason());
-    }
-    
-    // Write an Float number on the database path robots/rightmotor
-    if (Firebase.RTDB.setFloat(&fbdo, "robots/rightmotor", rightMotorNum)){
-      Serial.println("PASSED");
-      Serial.print("PATH: ");
-      Serial.println(fbdo.dataPath());
-      Serial.print("TYPE: "); 
-      Serial.println(fbdo.dataType());
-    }
-    else {
-      Serial.println("FAILED");
-      Serial.println("REASON: ");
-      Serial.println(fbdo.errorReason());
-    }
-  }
+  
 }
