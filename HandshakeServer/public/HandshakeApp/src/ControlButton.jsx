@@ -16,7 +16,7 @@ export default function ControlButton(props) {
         update(ref(FIREBASE.db), updates);
     }
     function handleButtonUp() {
-        updates[pathRef.toString().substring(pathRef.root.toString().length-1)] = 90;
+        updates[pathRef.toString().substring(pathRef.root.toString().length-1)] = 95;
         update(ref(FIREBASE.db), updates);
     }
 
