@@ -14,7 +14,6 @@ function App() {
   const databaseLeftMotor = ref(FIREBASE.db, dataLeftMotorPath);
   const databaseRightMotor = ref(FIREBASE.db, dataRightMotorPath);
 
-
   return (
     <>
       <div>

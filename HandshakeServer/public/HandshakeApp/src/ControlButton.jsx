@@ -9,20 +9,25 @@ export default function ControlButton(props) {
 
     const updates = {};
 
-    
-
     function handleButtonDown() {
+        console.log("pressed");
         updates[pathRef.toString().substring(pathRef.root.toString().length-1)] = value;
         update(ref(FIREBASE.db), updates);
     }
     function handleButtonUp() {
+        console.log("released");
         updates[pathRef.toString().substring(pathRef.root.toString().length-1)] = 95;
         update(ref(FIREBASE.db), updates);
     }
 
     return (
         <>
-            <button onMouseDown={handleButtonDown} onMouseUp={handleButtonUp}>{name}</button>
+            <button 
+                onMouseDown={handleButtonDown} 
+                onMouseUp={handleButtonUp}
+                onTouchStart={handleButtonDown}
+                onTouchEnd={handleButtonUp}
+            >{name}</button>
         </>
     )
 }
