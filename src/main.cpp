@@ -5,6 +5,8 @@
 #include <Adafruit_SH1106.h>
 #include <FirebaseClient.h>
 #include <ESP32Servo.h>
+#include "wifiTools.h"
+#include "time.h"
 
 #if defined(ESP32)
   #include <WiFi.h>
@@ -12,26 +14,12 @@
   #include <ESP8266WiFi.h>
 #endif
 
-// Insert your network credentials
-#define WIFI_SSID "TELUS3280"
-#define WIFI_PASSWORD "m3BcxPDvF4F2"
-
 // Insert Firebase project API Key
 #define API_KEY "AIzaSyDqATxGy0ATTYjuo-K6fOB9AUAG1AWzspU"
-
 // Insert RTDB URLefine the RTDB URL */
 #define DATABASE_URL "https://handshake-664b7-default-rtdb.firebaseio.com/" 
 
-virtuabotixRTC myClock(3, 4, 2);
-Adafruit_SH1106 display(21, 22);
-int state = 1;
-DefaultNetwork network;
-NoAuth no_auth;
-FirebaseApp app;
-
-void asyncCB(AsyncResult &aResult);
-
-void printResult(AsyncResult &aResult);
+#define MOTOR_STOP_PWM 95
 
 #if defined(ESP32) || defined(ESP8266) || defined(ARDUINO_RASPBERRY_PI_PICO_W)
 #include <WiFiClientSecure.h>
@@ -41,44 +29,80 @@ WiFiClientSecure ssl_client;
 WiFiSSLClient ssl_client;
 #endif
 
+
+
+virtuabotixRTC myClock(3, 4, 2);
+Adafruit_SH1106 display(21, 22);
+int state = 1;
+DefaultNetwork network;
+NoAuth no_auth;
+FirebaseApp app;
+
+void asyncCB(AsyncResult &aResult);
+void printResult(AsyncResult &aResult);
+
 using AsyncClient = AsyncClientClass;
-
 AsyncClient aClient(ssl_client, getNetwork(network));
-
 RealtimeDatabase Database;
 
 bool taskComplete = false;
-float leftMotorNum = 5;
-float rightMotorNum = 5;
+float leftMotorNum = MOTOR_STOP_PWM;
+float rightMotorNum = MOTOR_STOP_PWM;
+
+const char* ntpServer = "pool.ntp.org";
+
+uint32_t milliscounter= 0; 
+uint32_t previousMillis = 0;
+const int updateActivityInterval = 300000;
 
 Servo leftServo;
 Servo rightServo;
+ 
+String robotID;
+object_t json;
+JsonWriter writer;
 
 void drawUI() {
   display.clearDisplay();
   display.setTextSize(1);
   display.setCursor(2, 2);
-  display.println(" Handshakes's  Clock  Sleep");
-  display.drawLine(0, 11, 128, 11, WHITE);
-  display.drawLine(94, 0, 94, 10, WHITE);
-  display.drawLine(26, 44, 102, 44, WHITE);
+  display.println("Handshakes's Motors");
+}
+
+void setupWifi() {
+  Serial.print("Jump pins ");
+  Serial.print(WIFI_SET_PIN);
+  Serial.print(" and ");
+  Serial.print(WIFI_SET_PIN_GROUND);
+  Serial.println("to set up Wifi Network");
+  if(wifi_set_main())
+  {
+    Serial.println("Connect WIFI SUCCESS");
+  }
+  else
+  {
+    Serial.println("Connect WIFI FAULT");
+  }
+}
+
+unsigned long getTime() {
+  time_t now;
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo)) {
+    //Serial.println("Failed to obtain time");
+    return(0);
+  }
+  time(&now);
+  return now;
 }
 
 void setup(){
   Serial.begin(115200);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  robotID = WiFi.macAddress().substring(0, 5);
+  Serial.print("Robot MAC Address: ");
+  Serial.println(robotID);
 
-  Serial.print("Connecting to Wi-Fi");
-  unsigned long ms = millis();
-  while (WiFi.status() != WL_CONNECTED)
-  {
-      Serial.print(".");
-      delay(300);
-  }
-  Serial.println();
-  Serial.print("Connected with IP: ");
-  Serial.println(WiFi.localIP());
-  Serial.println();
+  setupWifi();
 
   Firebase.printf("Firebase Client v%s\n", FIREBASE_CLIENT_VERSION);
   
@@ -104,6 +128,8 @@ void setup(){
   drawUI();
   display.display();
 
+  configTime(0, 0, ntpServer);
+
   leftServo.attach(33);
   rightServo.attach(32);
 }
@@ -117,10 +143,27 @@ void loop() {
 
     Database.loop();
 
-    if (app.ready() && !taskComplete)
+    if (app.ready())
     {
-      leftMotorNum = static_cast<float>(Database.get(aClient, "/robots/leftmotor"));
-      rightMotorNum = static_cast<float>(Database.get(aClient, "/robots/rightmotor"));
+      milliscounter = millis();
+      
+      if (Database.existed(aClient, "/robotIDs/"+robotID)) 
+      {
+        leftMotorNum = Database.get<float>(aClient, "/robotIDs/"+robotID+"/leftmotor");
+        rightMotorNum = Database.get<float>(aClient, "/robotIDs/"+robotID+"/rightmotor");
+        if (milliscounter - previousMillis >  updateActivityInterval || previousMillis == 0) {
+          writer.create(json, "lastactive", getTime());
+          Database.update(aClient, "/robotIDs/"+robotID, json);
+          previousMillis = milliscounter;
+        }
+      } 
+      else 
+      {
+        Database.set<float>(aClient, "/robotIDs/"+robotID+"/leftmotor", MOTOR_STOP_PWM);
+        Database.set<float>(aClient, "/robotIDs/"+robotID+"/rightmotor", MOTOR_STOP_PWM);
+        Database.set<uint32_t>(aClient, "/robotIDs/"+robotID+"/lastactive", getTime());
+      }
+
       leftServo.write(leftMotorNum);
       rightServo.write(rightMotorNum);
     }
@@ -130,6 +173,8 @@ void loop() {
     display.setTextColor(WHITE);
     display.setTextSize(1);
     display.setCursor(1, 19);
+    display.print("RobotID: ");
+    display.println(robotID);
     display.print("Right: ");
     display.println(rightMotorNum);
     display.print("Left: ");

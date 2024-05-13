@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { child, get, getDatabase, ref, set } from 'firebase/database';
+import { child, get, getDatabase, onValue, ref, set } from 'firebase/database';
 import { GoogleAuthProvider, getAuth, onAuthStateChanged, signInWithPopup, signOut} from 'firebase/auth';
 import { hardwareConstants } from "./util";
 
@@ -13,7 +13,6 @@ export default class FirebaseTools {
     dataLeftMotorPath; 
     dataRightMotorPath;
     connectedRobotID;
-    motorValues = {};
     #uid;
     // Your web app's Firebase configuration
     firebaseConfig = {
@@ -30,6 +29,7 @@ export default class FirebaseTools {
         this.db = getDatabase(this.app);
         this.auth = getAuth();
         this.#uid = '';
+        this.connectedRobotID = '';
         onAuthStateChanged(this.auth, (user) => {
             if (user) {
                 this.#uid = user.uid;
@@ -37,17 +37,13 @@ export default class FirebaseTools {
             }
         });
         this.provider = new GoogleAuthProvider();
-        this.motorValues = {
-            leftMotor: hardwareConstants.PWM_STOP_VALUE,
-            rightMotor: hardwareConstants.PWM_STOP_VALUE, 
-        }
     }
 
     static getInstance() {
         if (this.#instance) {
             return this.#instance;
         } else {
-            this.#instance = new FirebaseTools();
+            this.#instance = new FirebaseTools()
             return this.#instance;
         }
     }
@@ -70,17 +66,11 @@ export default class FirebaseTools {
             const user = result.user;
             this.#uid = user.uid;
             get(child(ref(this.db), `users/${this.#uid}`)).then((snapshot) => {
-            if (!snapshot.exists()) {
-                set(ref(this.db, `users/${this.#uid}`), {
-                    leftmotor: hardwareConstants.PWM_STOP_VALUE,
-                    rightmotor: hardwareConstants.PWM_STOP_VALUE,
-                    robotID : -1
-                    });
-            } 
-            this.dataLeftMotorPath = `users/${this.#uid}/leftmotor`;
-            this.dataRightMotorPath = `users/${this.#uid}/rightmotor`;
-            this.connectedRobotID = `users/${this.#uid}/robotID`;
-            this.#fetchMotorsValues();
+                if (!snapshot.exists()) {
+                    set(ref(this.db, `users/${this.#uid}`), {
+                        robotID : ""
+                        });
+                } 
             this.#fetchMotorPaths();
             });
         }).catch((error) => {
@@ -94,29 +84,24 @@ export default class FirebaseTools {
         }   
     }
 
-    #fetchMotorPaths() {
+    async #fetchMotorPaths() {
         if (this.isUserLoggedIn()) {
-            this.dataLeftMotorPath = `users/${this.#uid}/leftmotor`;
-            this.dataRightMotorPath = `users/${this.#uid}/rightmotor`;
-            this.connectedRobotID = `users/${this.#uid}/robotID`;
+            const robotIdPromise = get(child(ref(this.db), `users/${this.#uid}/robotID`))
+                .then((snapshot) => {
+                    if (snapshot.exists()) {
+                        this.connectedRobotID = snapshot.val();
+                    }});
+            onValue(ref(this.db, `users/${this.#uid}/robotID`), (snapshot) => {
+                if (snapshot.exists()) {
+                    this.connectedRobotID = snapshot.val();
+                }});
+            console.log(this.connectedRobotID);
+            const motorPathsPromise = robotIdPromise.then(() => {
+                this.dataLeftMotorPath = `robotIDs/${this.connectedRobotID}/leftmotor`;
+                this.dataRightMotorPath = `robotIDs/${this.connectedRobotID}/rightmotor`;
+            });
+            return motorPathsPromise
         }
-    }
-
-    #fetchMotorsValues() {
-        if (this.isUserLoggedIn()) {
-            let leftMotorFetch;
-            let rightMotorFetch;
-            get(child(ref(this.db), `users/${this.#uid}/leftmotor`)).then((snapshot) => {
-                leftMotorFetch = snapshot.val();
-              });
-            get(child(ref(this.db), `users/${this.#uid}/rightmotor`)).then((snapshot) => {
-                rightMotorFetch = snapshot.val();
-            });  
-            this.motorValues = {
-                leftMotor: leftMotorFetch,
-                rightMotor: rightMotorFetch,
-            }
-        }   
     }
 
     getUserPath() {
