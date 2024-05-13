@@ -29,7 +29,6 @@ export default class FirebaseTools {
         this.db = getDatabase(this.app);
         this.auth = getAuth();
         this.#uid = '';
-        this.connectedRobotID = '';
         onAuthStateChanged(this.auth, (user) => {
             if (user) {
                 this.#uid = user.uid;
@@ -43,7 +42,7 @@ export default class FirebaseTools {
         if (this.#instance) {
             return this.#instance;
         } else {
-            this.#instance = new FirebaseTools()
+            this.#instance = new FirebaseTools();
             return this.#instance;
         }
     }
@@ -71,7 +70,7 @@ export default class FirebaseTools {
                         robotID : ""
                         });
                 } 
-            this.#fetchMotorPaths();
+                this.#fetchMotorPaths();
             });
         }).catch((error) => {
             console.log(error);
@@ -86,22 +85,17 @@ export default class FirebaseTools {
 
     async #fetchMotorPaths() {
         if (this.isUserLoggedIn()) {
-            const robotIdPromise = get(child(ref(this.db), `users/${this.#uid}/robotID`))
-                .then((snapshot) => {
-                    if (snapshot.exists()) {
-                        this.connectedRobotID = snapshot.val();
-                    }});
             onValue(ref(this.db, `users/${this.#uid}/robotID`), (snapshot) => {
                 if (snapshot.exists()) {
                     this.connectedRobotID = snapshot.val();
+                    this.#assignMotorsCurrentRobotID();
                 }});
-            console.log(this.connectedRobotID);
-            const motorPathsPromise = robotIdPromise.then(() => {
-                this.dataLeftMotorPath = `robotIDs/${this.connectedRobotID}/leftmotor`;
-                this.dataRightMotorPath = `robotIDs/${this.connectedRobotID}/rightmotor`;
-            });
-            return motorPathsPromise
         }
+    }
+
+    #assignMotorsCurrentRobotID() {
+        this.dataLeftMotorPath = `robotIDs/${this.connectedRobotID}/leftmotor`;
+        this.dataRightMotorPath = `robotIDs/${this.connectedRobotID}/rightmotor`;
     }
 
     getUserPath() {

@@ -1,5 +1,5 @@
 // Import the functions you need from the SDKs you need
-import { ref, onValue, child } from 'firebase/database';
+import { ref, onValue } from 'firebase/database';
 import { useEffect, useState } from "react";
 import ValueIndicator from "./ValueIndicator";
 import FirebaseTools from './FirebaseTools';
@@ -16,20 +16,24 @@ export default function RobotInfoBox() {
   let [rightMotorReading, setRightMotorReading] = useState(DEFAULT_VALUE);
 
   useEffect(() => {
-    // Attach an asynchronous callback to read the data
-    onValue(ref(FIREBASE.db, FIREBASE.dataLeftMotorPath), (snapshot) => {
-      setLeftMotorReading(snapshot.val());
-      !Object.is(leftMotorReading, DEFAULT_VALUE) ? console.log(leftMotorReading) : null;
-      }, (errorObject) => {
-      console.log('The read failed: ' + errorObject.name);
-    });
+    async function fetchData() {
+      // Attach an asynchronous callback to read the data
 
-    onValue(ref(FIREBASE.db, FIREBASE.dataRightMotorPath), (snapshot) => {
-      setRightMotorReading(snapshot.val());
-      !Object.is(rightMotorReading, DEFAULT_VALUE) ? console.log(rightMotorReading) : null;
-      }, (errorObject) => {
-      console.log('The read failed: ' + errorObject.name);
-    });
+      onValue(ref(FIREBASE.db, FIREBASE.dataLeftMotorPath), (snapshot) => {
+        setLeftMotorReading(snapshot.val());
+        !Object.is(leftMotorReading, DEFAULT_VALUE) ? console.log(leftMotorReading) : null;
+        }, (errorObject) => {
+        console.log('The read failed: ' + errorObject.name);
+      });
+
+      onValue(ref(FIREBASE.db, FIREBASE.dataRightMotorPath), (snapshot) => {
+        setRightMotorReading(snapshot.val());
+        !Object.is(rightMotorReading, DEFAULT_VALUE) ? console.log(rightMotorReading) : null;
+        }, (errorObject) => {
+        console.log('The read failed: ' + errorObject.name);
+      });
+    }
+    fetchData();
   }, DEFAULT_VALUE)
 
 
