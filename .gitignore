@@ -146,4 +146,5 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
-.pio/libdeps/firebeetle32/ArduinoRTClibrary
+.pio/libdeps/firebeetle32/
+!.pio/libdeps/firebeetle32/integrity.dat

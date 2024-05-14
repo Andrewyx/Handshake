@@ -31,7 +31,6 @@ int record_rst_time()
     else
     {
         printf("Done\n");
-
         // Read
         printf("Reading restart counter from NVS ... ");
         int32_t restart_counter = 0; // value will default to 0, if not set yet in NVS
@@ -197,24 +196,13 @@ void check_wifi(char *ssid, char *password)
     return;
 }
 
-void notFound(AsyncWebServerRequest *request)
-{
-  if (request->method() == HTTP_OPTIONS)
-  {
-    request->send(200);
-  }
-  else
-  {
-    request->send(404, "application/json", "{\"message\":\"Not found\"}");
-  }
+void notFound(AsyncWebServerRequest *request) {
+  request->send(404, "text/plain", "Not found");
 }
 
 void ap_init()
 {
-    // initSPIFFS();
-    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
-    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "GET, POST, PUT");
-    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "Content-Type");
+    initSPIFFS();
     WiFi.softAP("Handshake_Wifi");
     IPAddress myIP = WiFi.softAPIP();
     Serial.print("AP IP address: ");
@@ -231,7 +219,18 @@ void ap_init()
         request->send(SPIFFS, "/style.css","text/css");
         });
     server.on("/set_over", HTTP_GET, [](AsyncWebServerRequest *request){
-        set_wifi_from_url(request->url());
+        Serial.print("URL: ");
+        Serial.println(request->url());
+        String ssid = request->getParam("ssid")->value();
+        String pwd = request->getParam("password")->value();
+        Serial.println();
+        Serial.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+        Serial.println("Get ssid and password from url:");
+        Serial.println(ssid);
+        Serial.println(pwd);
+        Serial.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+
+        record_wifi((char *)ssid.c_str(), (char *)pwd.c_str());
         isWifiBlank = false;
         request->send(SPIFFS, "/index.html", "text/html");
     });
@@ -248,147 +247,10 @@ void initSPIFFS() {
 
 int wifi_config_server()
 {
-
-    // WiFiClient client = server.available(); // listen for incoming clients
-
-    // if (client) // if you get a client,
-    // {
-    //     Serial.println("---------------------------------------------------");
-    //     Serial.printf("Index:%d\n", client_count);
-    //     client_count++;
-    //     Serial.println("New Client."); // print a message out the serial port
-    //     String currentLine = "";       // make a String to hold incoming data from the client
-    //     while (client.connected())
-    //     { // loop while the client's connected
-    //         if (client.available())
-    //         {                           // if there's bytes to read from the client,
-    //             char c = client.read(); // read a byte, then
-    //             Serial.write(c);        // print it out the serial monitor
-    //             if (c == '\n')
-    //             { // if the byte is a newline character
-
-    //                 // if the current line is blank, you got two newline characters in a row.
-    //                 // that's the end of the client HTTP request, so send a response:
-    //                 if (currentLine.length() == 0)
-    //                 {
-    //                     // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
-    //                     // and a content-type so the client knows what's coming, then a blank line:
-    //                     client.println("HTTP/1.1 200 OK");
-    //                     client.println("Content-type:text/html");
-    //                     client.println();
-
-    //                     // the content of the HTTP response follows the header:
-    //                     client.print("<h1>Handshake</h1><br><h2>ESP32 WIFI CONFIG</h2><br>");
-    //                     client.print("Click <a href=\"/wifi_set\">here</a> to set WIFI.<br>");
-
-    //                     // The HTTP response ends with another blank line:
-    //                     client.println();
-    //                     // break out of the while loop:
-    //                     break;
-    //                 }
-    //                 else
-    //                 { // if you got a newline, then clear currentLine:
-    //                     currentLine = "";
-    //                 }
-    //             }
-    //             else if (c != '\r')
-    //             {                     // if you got anything else but a carriage return character,
-    //                 currentLine += c; // add it to the end of the currentLine
-    //             }
-    //             //show wifiset page
-    //             if (currentLine.endsWith("GET /wifi_set"))
-    //             {
-    //                 // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
-    //                 // and a content-type so the client knows what's coming, then a blank line:
-    //                 client.println("HTTP/1.1 200 OK");
-    //                 client.println("Content-type:text/html");
-    //                 client.println();
-
-    //                 client.print("<h1>Handshake</h1><br><h2>ESP32 WIFI CONFIG</h2><br>");
-    //                 client.print("<form action=\"/set_over\">SSID:<br><input type=\"text\" name=\"ssid\"><br>PASSWORD:<br><input type=\"text\" name=\"password\"><br><br>");
-    //                 client.print("<input type=\"submit\" value=\"Set\"></form>");
-    //                 // The HTTP response ends with another blank line:
-    //                 client.println();
-    //                 // break out of the while loop:
-    //                 break;
-    //             }
-
-    //             if (currentLine.endsWith("GET /set_over"))
-    //             {
-    //                 String get_request = "";
-    //                 //read GET next line
-    //                 while (1)
-    //                 {
-    //                     char c_get = client.read();
-    //                     Serial.write(c_get);
-    //                     if (c_get == '\n')
-    //                     {
-    //                         break;
-    //                     }
-    //                     else
-    //                     {
-    //                         get_request += c_get;
-    //                     }
-    //                 }
-
-    //                 //set_wifi_from_url(server.uri());
-    //                 set_wifi_from_url(get_request);
-
-    //                 client.println("HTTP/1.1 200 OK");
-    //                 client.println("Content-type:text/html");
-    //                 client.println();
-
-    //                 client.print("<h1>Handshake</h1><br><h2>ESP32 WIFI CONFIG</h2><br>");
-    //                 client.print("Set Successful<br>");
-    //                 client.println();
-
-    //                 client.stop();
-    //                 Serial.println("Client Disconnected.");
-
-    //                 return 0;
-    //             }
-    //         }
-    //     }
-    //     // close the connection:
-    //     client.stop();
-    //     Serial.println("Client Disconnected.");
-    // }
-
     if (!isWifiBlank) {
         server.end();
     }
-
     return isWifiBlank;
-}
-
-void set_wifi_from_url(String get_url)
-{
-    //get_url = "http://192.168.4.1/set_over?ssid=Makerfabs&password=20160704"
-    int str_len = 0;
-    int ssid_add = 0;
-    int pwd_add = 0;
-    int end_add = 0;
-
-    String ssid = "";
-    String pwd = "";
-
-    str_len = get_url.length();
-    ssid_add = get_url.indexOf('?');
-    pwd_add = get_url.indexOf('&');
-    end_add = get_url.indexOf(' ');
-
-    ssid = get_url.substring(ssid_add + 6, pwd_add);
-    pwd = get_url.substring(pwd_add + 10, end_add);
-
-    Serial.println();
-    Serial.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-    Serial.println("Get ssid and password from url:");
-    Serial.println(get_url);
-    Serial.println(ssid);
-    Serial.println(pwd);
-    Serial.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-
-    record_wifi((char *)ssid.c_str(), (char *)pwd.c_str());
 }
 
 int wifi_set_main()

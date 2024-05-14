@@ -4,25 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>HandshakeWIFISetup</title>
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 
 <body>
-    <!-- <div>
-        <h1>Handshake</h1><br>
-        <h2>ESP32 WIFI CONFIG</h2><br>
-        Click <a href="/wifi_set">here</a> to set WIFI.<br>
-    </div> -->
     <div id="root">
         <div class="card">
-            <h1>Handshake</h1><br>
+            <h1>Handshake</h1>
+            <p class="read-the-docs">Wifi Setup Interface. Enter your Wifi Credentials Below</p>
             <form action="/set_over">
-                <label>SSID:</label> <br />
-                <input type="text" name="ssid"> <br />
-                <label>Password:</label> <br />
-                <input type="text" name="password"><br><br>
-                <input type="submit" value="Set">
+                <input type="text" name="ssid" placeholder="Enter ssid"> <br />
+                <input type="text" name="password" placeholder="Enter password "><br><br>
+                <input type="submit" value="Submit">
             </form>
         </div>
     </div>

@@ -28,7 +28,6 @@ WiFiClientSecure ssl_client;
 WiFiSSLClient ssl_client;
 #endif
 
-
 Adafruit_SH1106 display(21, 22);
 int state = 1;
 DefaultNetwork network;
@@ -38,7 +37,6 @@ FirebaseApp app;
 void asyncCB(AsyncResult &aResult);
 void printResult(AsyncResult &aResult);
 
-// using AsyncClient = AsyncClientClass;
 AsyncClientClass aClient(ssl_client, getNetwork(network));
 RealtimeDatabase Database;
 

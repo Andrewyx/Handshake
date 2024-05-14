@@ -1,5 +1,4 @@
 #root {
-    max-width: 1280px;
     margin: 0 auto;
     padding: 2rem;
     text-align: center;
@@ -55,10 +54,11 @@ body {
     place-items: center;
     min-width: 320px;
     min-height: 100vh;
+    overflow: hidden;
 }
 
 h1 {
-    font-size: 3.2em;
+    font-size: 3em;
     line-height: 1.1;
 }
 
@@ -83,9 +83,14 @@ button:focus-visible {
     outline: 4px auto -webkit-focus-ring-color;
 }
 
+.card label {
+    margin: 1rem;
+}
+
 input {
     border-radius: 8px;
     border: 1px solid transparent;
+    margin-top: 1rem;
     padding: 0.6em 1.2em;
     font-size: 1em;
     font-weight: 500;
