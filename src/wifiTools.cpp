@@ -1,7 +1,9 @@
 #include "wifiTools.h"
 
-WiFiServer server(80);
+AsyncWebServer server(80);
+
 int client_count = 0;
+bool isWifiBlank = true;
 
 int record_rst_time()
 {
@@ -15,7 +17,7 @@ int record_rst_time()
         ESP_ERROR_CHECK(nvs_flash_erase());
         err = nvs_flash_init();
     }
-    ESP_ERROR_CHECK(err);
+    ESP_ERROR_CHECK(err); 
 
     // Open 打开NVS文件
     printf("\n");
@@ -195,124 +197,168 @@ void check_wifi(char *ssid, char *password)
     return;
 }
 
+void notFound(AsyncWebServerRequest *request)
+{
+  if (request->method() == HTTP_OPTIONS)
+  {
+    request->send(200);
+  }
+  else
+  {
+    request->send(404, "application/json", "{\"message\":\"Not found\"}");
+  }
+}
+
 void ap_init()
 {
-    //WiFi.softAP(ssid, password);
+    // initSPIFFS();
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "GET, POST, PUT");
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "Content-Type");
     WiFi.softAP("Handshake_Wifi");
     IPAddress myIP = WiFi.softAPIP();
     Serial.print("AP IP address: ");
     Serial.println(myIP);
-    server.begin();
+    server.serveStatic("/", SPIFFS, "/");
+
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+        Serial.print("Client status: ");
+        Serial.println(request->client()->connected());
+        request->send(SPIFFS, "/index.html", "text/html");
+        });
+
+    server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
+        request->send(SPIFFS, "/style.css","text/css");
+        });
+    server.on("/set_over", HTTP_GET, [](AsyncWebServerRequest *request){
+        set_wifi_from_url(request->url());
+        isWifiBlank = false;
+        request->send(SPIFFS, "/index.html", "text/html");
+    });
+    server.onNotFound(notFound);
+    server.begin();    
+}
+
+void initSPIFFS() {
+  if (!SPIFFS.begin()) {
+    Serial.println("An error has occurred while mounting SPIFFS");
+  }
+  Serial.println("SPIFFS mounted successfully");
 }
 
 int wifi_config_server()
 {
 
-    WiFiClient client = server.available(); // listen for incoming clients
+    // WiFiClient client = server.available(); // listen for incoming clients
 
-    if (client) // if you get a client,
-    {
-        Serial.println("---------------------------------------------------");
-        Serial.printf("Index:%d\n", client_count);
-        client_count++;
-        Serial.println("New Client."); // print a message out the serial port
-        String currentLine = "";       // make a String to hold incoming data from the client
-        while (client.connected())
-        { // loop while the client's connected
-            if (client.available())
-            {                           // if there's bytes to read from the client,
-                char c = client.read(); // read a byte, then
-                Serial.write(c);        // print it out the serial monitor
-                if (c == '\n')
-                { // if the byte is a newline character
+    // if (client) // if you get a client,
+    // {
+    //     Serial.println("---------------------------------------------------");
+    //     Serial.printf("Index:%d\n", client_count);
+    //     client_count++;
+    //     Serial.println("New Client."); // print a message out the serial port
+    //     String currentLine = "";       // make a String to hold incoming data from the client
+    //     while (client.connected())
+    //     { // loop while the client's connected
+    //         if (client.available())
+    //         {                           // if there's bytes to read from the client,
+    //             char c = client.read(); // read a byte, then
+    //             Serial.write(c);        // print it out the serial monitor
+    //             if (c == '\n')
+    //             { // if the byte is a newline character
 
-                    // if the current line is blank, you got two newline characters in a row.
-                    // that's the end of the client HTTP request, so send a response:
-                    if (currentLine.length() == 0)
-                    {
-                        // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
-                        // and a content-type so the client knows what's coming, then a blank line:
-                        client.println("HTTP/1.1 200 OK");
-                        client.println("Content-type:text/html");
-                        client.println();
+    //                 // if the current line is blank, you got two newline characters in a row.
+    //                 // that's the end of the client HTTP request, so send a response:
+    //                 if (currentLine.length() == 0)
+    //                 {
+    //                     // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
+    //                     // and a content-type so the client knows what's coming, then a blank line:
+    //                     client.println("HTTP/1.1 200 OK");
+    //                     client.println("Content-type:text/html");
+    //                     client.println();
 
-                        // the content of the HTTP response follows the header:
-                        client.print("<h1>Makerfabs</h1><br><h2>ESP32 WIFI CONFIG</h2><br>");
-                        client.print("Click <a href=\"/wifi_set\">here</a> to set WIFI.<br>");
+    //                     // the content of the HTTP response follows the header:
+    //                     client.print("<h1>Handshake</h1><br><h2>ESP32 WIFI CONFIG</h2><br>");
+    //                     client.print("Click <a href=\"/wifi_set\">here</a> to set WIFI.<br>");
 
-                        // The HTTP response ends with another blank line:
-                        client.println();
-                        // break out of the while loop:
-                        break;
-                    }
-                    else
-                    { // if you got a newline, then clear currentLine:
-                        currentLine = "";
-                    }
-                }
-                else if (c != '\r')
-                {                     // if you got anything else but a carriage return character,
-                    currentLine += c; // add it to the end of the currentLine
-                }
-                //show wifiset page
-                if (currentLine.endsWith("GET /wifi_set"))
-                {
-                    // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
-                    // and a content-type so the client knows what's coming, then a blank line:
-                    client.println("HTTP/1.1 200 OK");
-                    client.println("Content-type:text/html");
-                    client.println();
+    //                     // The HTTP response ends with another blank line:
+    //                     client.println();
+    //                     // break out of the while loop:
+    //                     break;
+    //                 }
+    //                 else
+    //                 { // if you got a newline, then clear currentLine:
+    //                     currentLine = "";
+    //                 }
+    //             }
+    //             else if (c != '\r')
+    //             {                     // if you got anything else but a carriage return character,
+    //                 currentLine += c; // add it to the end of the currentLine
+    //             }
+    //             //show wifiset page
+    //             if (currentLine.endsWith("GET /wifi_set"))
+    //             {
+    //                 // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
+    //                 // and a content-type so the client knows what's coming, then a blank line:
+    //                 client.println("HTTP/1.1 200 OK");
+    //                 client.println("Content-type:text/html");
+    //                 client.println();
 
-                    client.print("<h1>Makerfabs</h1><br><h2>ESP32 WIFI CONFIG</h2><br>");
-                    client.print("<form action=\"/set_over\">SSID:<br><input type=\"text\" name=\"ssid\"><br>PASSWORD:<br><input type=\"text\" name=\"password\"><br><br>");
-                    client.print("<input type=\"submit\" value=\"Set\"></form>");
-                    // The HTTP response ends with another blank line:
-                    client.println();
-                    // break out of the while loop:
-                    break;
-                }
+    //                 client.print("<h1>Handshake</h1><br><h2>ESP32 WIFI CONFIG</h2><br>");
+    //                 client.print("<form action=\"/set_over\">SSID:<br><input type=\"text\" name=\"ssid\"><br>PASSWORD:<br><input type=\"text\" name=\"password\"><br><br>");
+    //                 client.print("<input type=\"submit\" value=\"Set\"></form>");
+    //                 // The HTTP response ends with another blank line:
+    //                 client.println();
+    //                 // break out of the while loop:
+    //                 break;
+    //             }
 
-                if (currentLine.endsWith("GET /set_over"))
-                {
-                    String get_request = "";
-                    //read GET next line
-                    while (1)
-                    {
-                        char c_get = client.read();
-                        Serial.write(c_get);
-                        if (c_get == '\n')
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            get_request += c_get;
-                        }
-                    }
+    //             if (currentLine.endsWith("GET /set_over"))
+    //             {
+    //                 String get_request = "";
+    //                 //read GET next line
+    //                 while (1)
+    //                 {
+    //                     char c_get = client.read();
+    //                     Serial.write(c_get);
+    //                     if (c_get == '\n')
+    //                     {
+    //                         break;
+    //                     }
+    //                     else
+    //                     {
+    //                         get_request += c_get;
+    //                     }
+    //                 }
 
-                    //set_wifi_from_url(server.uri());
-                    set_wifi_from_url(get_request);
+    //                 //set_wifi_from_url(server.uri());
+    //                 set_wifi_from_url(get_request);
 
-                    client.println("HTTP/1.1 200 OK");
-                    client.println("Content-type:text/html");
-                    client.println();
+    //                 client.println("HTTP/1.1 200 OK");
+    //                 client.println("Content-type:text/html");
+    //                 client.println();
 
-                    client.print("<h1>Makerfabs</h1><br><h2>ESP32 WIFI CONFIG</h2><br>");
-                    client.print("Set Successful<br>");
-                    client.println();
+    //                 client.print("<h1>Handshake</h1><br><h2>ESP32 WIFI CONFIG</h2><br>");
+    //                 client.print("Set Successful<br>");
+    //                 client.println();
 
-                    client.stop();
-                    Serial.println("Client Disconnected.");
+    //                 client.stop();
+    //                 Serial.println("Client Disconnected.");
 
-                    return 0;
-                }
-            }
-        }
-        // close the connection:
-        client.stop();
-        Serial.println("Client Disconnected.");
+    //                 return 0;
+    //             }
+    //         }
+    //     }
+    //     // close the connection:
+    //     client.stop();
+    //     Serial.println("Client Disconnected.");
+    // }
+
+    if (!isWifiBlank) {
+        server.end();
     }
-    return 1;
+
+    return isWifiBlank;
 }
 
 void set_wifi_from_url(String get_url)
@@ -352,7 +398,7 @@ int wifi_set_main()
     pinMode(WIFI_SET_PIN, INPUT_PULLUP);
     pinMode(WIFI_SET_PIN_GROUND, OUTPUT);
     digitalWrite(WIFI_SET_PIN_GROUND, LOW);
-    
+
     check_wifi(ssid, password);
 
     //3秒内拉低WIFI_SET_PIN则恢复出场设置并重启

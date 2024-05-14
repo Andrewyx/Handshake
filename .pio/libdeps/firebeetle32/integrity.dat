@@ -1,7 +1,7 @@
-https://github.com/nhatuan84/esp32-sh1106-oled
+adafruit/Adafruit GFX Library@^1.11.9
+https://github.com/me-no-dev/ESPAsyncWebServer.git
 mobizt/FirebaseClient@^1.2.0
-https://github.com/open-source-parsers/jsoncpp
 adafruit/Adafruit BusIO@^1.16.0
 https://github.com/madhephaestus/ESP32Servo
-adafruit/Adafruit GFX Library@^1.11.9
-https://github.com/chrisfryer78/ArduinoRTClibrary
+https://github.com/open-source-parsers/jsoncpp
+https://github.com/nhatuan84/esp32-sh1106-oled

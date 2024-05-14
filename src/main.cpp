@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include <Wire.h>
-#include <virtuabotixRTC.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH1106.h>
 #include <FirebaseClient.h>
@@ -30,8 +29,6 @@ WiFiSSLClient ssl_client;
 #endif
 
 
-
-virtuabotixRTC myClock(3, 4, 2);
 Adafruit_SH1106 display(21, 22);
 int state = 1;
 DefaultNetwork network;
@@ -41,8 +38,8 @@ FirebaseApp app;
 void asyncCB(AsyncResult &aResult);
 void printResult(AsyncResult &aResult);
 
-using AsyncClient = AsyncClientClass;
-AsyncClient aClient(ssl_client, getNetwork(network));
+// using AsyncClient = AsyncClientClass;
+AsyncClientClass aClient(ssl_client, getNetwork(network));
 RealtimeDatabase Database;
 
 bool taskComplete = false;
@@ -167,8 +164,6 @@ void loop() {
       leftServo.write(leftMotorNum);
       rightServo.write(rightMotorNum);
     }
-
-    myClock.updateTime();
     drawUI();
     display.setTextColor(WHITE);
     display.setTextSize(1);
