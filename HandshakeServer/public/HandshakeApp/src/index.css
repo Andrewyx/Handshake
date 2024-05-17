@@ -77,4 +77,8 @@ input {
   button {
     background-color: #f9f9f9;
   }
+
+  #robotID {
+    background-color: #f9f9f9ea;
+  }
 }

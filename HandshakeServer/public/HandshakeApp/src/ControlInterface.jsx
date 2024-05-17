@@ -47,15 +47,18 @@ export default function ControlInterface() {
   
       const formData = new FormData(e.target);
       const formJson = Object.fromEntries(formData.entries());
-  
+
+
       if (typeof formJson.id !== "string") {
         console.log("Invalid ID Type");
         return false;
       }
-  
-      get(child(ref(FIREBASE.db), `robotIDs/${formJson.id}`)).then((snapshot) => {
+
+      const input = formJson.id.toUpperCase();
+
+      get(child(ref(FIREBASE.db), `robotIDs/${input}`)).then((snapshot) => {
         if (snapshot.exists()) {
-          setAndUpdateRobotID(formJson.id);
+          setAndUpdateRobotID(input);
           setRobotConnectionID(true);
         } else {
           console.log("Invalid ID");
@@ -73,9 +76,9 @@ export default function ControlInterface() {
             <label>Status: </label>
             {robotStatus ? <label id="on">Online</label> : <label id="off">Offline</label>}
           </div>
-          <ControlButton name="Drive Left" value={120} path={FIREBASE.dataLeftMotorPath} />
-          <ControlButton name="Drive Right" value={120} path={FIREBASE.dataRightMotorPath} />
-          <RobotInfoBox />
+            <ControlButton name="Drive Left" value={120} path={FIREBASE.dataLeftMotorPath} />
+            <ControlButton name="Drive Right" value={120} path={FIREBASE.dataRightMotorPath} />
+            <RobotInfoBox />
           <button onClick={() => { setAndUpdateRobotID(null) }}>Disconnect</button>
         </div>
       )
@@ -83,7 +86,7 @@ export default function ControlInterface() {
     else {
       return (
         <form onSubmit={isRobotIDValid}>
-          <input name="id" placeholder="Enter Robot ID to Connect" />
+          <input id="robotID" name="id" placeholder="Enter Robot ID to Connect" />
           <button type="submit">Connect</button>
         </form>
       )

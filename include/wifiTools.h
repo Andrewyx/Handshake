@@ -14,8 +14,8 @@
 
 #define SSID_LENGTH 40
 
-#define WIFI_SET_PIN 26
-#define WIFI_SET_PIN_GROUND 25
+#define WIFI_SET_PIN 0
+// #define WIFI_SET_PIN_GROUND 25
 
 int record_rst_time();
 void nvs_test();

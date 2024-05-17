@@ -9,10 +9,7 @@ const FIREBASE = FirebaseTools.getInstance();
 
 function App() {
 
-  const auth = FIREBASE.auth;
-  auth.useDeviceLanguage();
-  auth.languageCode = 'it';
-  const [user] = useAuthState(auth);
+  const [user] = useAuthState(FIREBASE.auth);
 
   return (
     <>

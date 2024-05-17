@@ -19,6 +19,9 @@
 #define DATABASE_URL "https://handshake-664b7-default-rtdb.firebaseio.com/" 
 
 #define MOTOR_STOP_PWM 95
+#define LEFT_SERVO_PIN 22
+#define RIGHT_SERVO_PIN 23
+#define UPDATE_REMOTE_STATUS_MILLISECONDS 300000
 
 #if defined(ESP32) || defined(ESP8266) || defined(ARDUINO_RASPBERRY_PI_PICO_W)
 #include <WiFiClientSecure.h>
@@ -28,7 +31,7 @@ WiFiClientSecure ssl_client;
 WiFiSSLClient ssl_client;
 #endif
 
-Adafruit_SH1106 display(21, 22);
+Adafruit_SH1106 display(21, 19);
 int state = 1;
 DefaultNetwork network;
 NoAuth no_auth;
@@ -46,9 +49,9 @@ float rightMotorNum = MOTOR_STOP_PWM;
 
 const char* ntpServer = "pool.ntp.org";
 
-uint32_t milliscounter= 0; 
+uint32_t milliscounter = 0; 
 uint32_t previousMillis = 0;
-const int updateActivityInterval = 300000;
+const int updateActivityInterval = UPDATE_REMOTE_STATUS_MILLISECONDS;
 
 Servo leftServo;
 Servo rightServo;
@@ -65,11 +68,8 @@ void drawUI() {
 }
 
 void setupWifi() {
-  Serial.print("Jump pins ");
-  Serial.print(WIFI_SET_PIN);
-  Serial.print(" and ");
-  Serial.print(WIFI_SET_PIN_GROUND);
-  Serial.println("to set up Wifi Network");
+  Serial.println("Press BOOT button to configure Wifi");
+
   if(wifi_set_main())
   {
     Serial.println("Connect WIFI SUCCESS");
@@ -125,8 +125,8 @@ void setup(){
 
   configTime(0, 0, ntpServer);
 
-  leftServo.attach(33);
-  rightServo.attach(32);
+  leftServo.attach(LEFT_SERVO_PIN);
+  rightServo.attach(RIGHT_SERVO_PIN);
 }
 
 void loop() {

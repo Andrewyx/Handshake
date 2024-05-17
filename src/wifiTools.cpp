@@ -8,22 +8,20 @@ bool isWifiBlank = true;
 int record_rst_time()
 {
     int rst_time = 0;
-    // 初始化NVS，并检查初始化情况
+
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
     {
-        // 如果NVS分区被占用则对其进行擦除
-        // 并再次初始化
+
         ESP_ERROR_CHECK(nvs_flash_erase());
         err = nvs_flash_init();
     }
     ESP_ERROR_CHECK(err); 
 
-    // Open 打开NVS文件
     printf("\n");
     printf("Opening Non-Volatile Storage (NVS) handle... ");
-    nvs_handle my_handle;                                 // 定义不透明句柄
-    err = nvs_open("storage", NVS_READWRITE, &my_handle); // 打开文件
+    nvs_handle my_handle;                               
+    err = nvs_open("storage", NVS_READWRITE, &my_handle); 
     if (err != ESP_OK)
     {
         printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
@@ -73,23 +71,18 @@ int record_rst_time()
 
 void record_wifi(char *ssid, char *password)
 {
-
-    // 初始化NVS，并检查初始化情况
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
     {
-        // 如果NVS分区被占用则对其进行擦除
-        // 并再次初始化
         ESP_ERROR_CHECK(nvs_flash_erase());
         err = nvs_flash_init();
     }
     ESP_ERROR_CHECK(err);
 
-    // Open 打开NVS文件
     printf("\n");
     printf("Opening Non-Volatile Wifi (NVS) handle... ");
-    nvs_handle my_handle;                              // 定义不透明句柄
-    err = nvs_open("Wifi", NVS_READWRITE, &my_handle); // 打开文件
+    nvs_handle my_handle;                              
+    err = nvs_open("Wifi", NVS_READWRITE, &my_handle); 
     if (err != ESP_OK)
     {
         printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
@@ -122,7 +115,6 @@ void record_wifi(char *ssid, char *password)
     printf("\n");
 }
 
-//检测ssid名称
 void check_wifi(char *ssid, char *password)
 {
     char saved_ssid[SSID_LENGTH];
@@ -133,18 +125,16 @@ void check_wifi(char *ssid, char *password)
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
     {
-        // 如果NVS分区被占用则对其进行擦除
-        // 并再次初始化
+
         ESP_ERROR_CHECK(nvs_flash_erase());
         err = nvs_flash_init();
     }
     ESP_ERROR_CHECK(err);
 
-    // Open 打开NVS文件
     printf("\n");
     printf("Opening Non-Volatile Wifi (NVS) handle... \n");
-    nvs_handle my_handle;                              // 定义不透明句柄
-    err = nvs_open("Wifi", NVS_READWRITE, &my_handle); // 打开文件
+    nvs_handle my_handle;                             
+    err = nvs_open("Wifi", NVS_READWRITE, &my_handle); 
     if (err != ESP_OK)
     {
         printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
@@ -255,15 +245,14 @@ int wifi_config_server()
 
 int wifi_set_main()
 {
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "GET, POST, PUT");
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "Content-Type");
     char ssid[SSID_LENGTH];
     char password[SSID_LENGTH];
     pinMode(WIFI_SET_PIN, INPUT_PULLUP);
-    pinMode(WIFI_SET_PIN_GROUND, OUTPUT);
-    digitalWrite(WIFI_SET_PIN_GROUND, LOW);
-
     check_wifi(ssid, password);
 
-    //3秒内拉低WIFI_SET_PIN则恢复出场设置并重启
     Serial.println("Check WIFI_SET_PIN");
     int runtime = millis();
     int starttime = runtime;
@@ -291,8 +280,6 @@ int wifi_set_main()
     WiFi.begin(ssid, password);
 
     int connect_count = 0;
-
-    //10S未连接上自动跳过并返回0
     while (WiFi.status() != WL_CONNECTED)
     {
         delay(500);
@@ -302,7 +289,6 @@ int wifi_set_main()
             return 0;
     }
 
-    // 成功连接上WIFI则输出IP并返回1
     Serial.println("");
     Serial.println("WiFi connected");
     Serial.println("IP address: ");

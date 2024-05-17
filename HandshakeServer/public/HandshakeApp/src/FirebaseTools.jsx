@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { child, get, getDatabase, onValue, ref, set } from 'firebase/database';
-import { GoogleAuthProvider, getAuth, onAuthStateChanged, signInWithPopup, signOut} from 'firebase/auth';
+import { GoogleAuthProvider, getAuth, onAuthStateChanged, signInWithRedirect, signOut} from 'firebase/auth';
 import { hardwareConstants } from "./util";
 
 export default class FirebaseTools {
@@ -28,6 +28,8 @@ export default class FirebaseTools {
         this.app = initializeApp(this.firebaseConfig);
         this.db = getDatabase(this.app);
         this.auth = getAuth();
+        this.auth.useDeviceLanguage();
+        this.auth.languageCode = 'it';
         this.#uid = '';
         onAuthStateChanged(this.auth, (user) => {
             if (user) {
@@ -58,7 +60,8 @@ export default class FirebaseTools {
     }
 
     login() {
-        signInWithPopup(this.auth, this.provider)
+        signInWithRedirect(this.auth, this.provider);
+        getRedirectResult(this.auth)
         .then((result) => {
             const credential = GoogleAuthProvider.credentialFromResult(result);
             const token = credential.accessToken;
