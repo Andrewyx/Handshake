@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH1106.h>
@@ -48,6 +49,7 @@ float leftMotorNum = MOTOR_STOP_PWM;
 float rightMotorNum = MOTOR_STOP_PWM;
 
 const char* ntpServer = "pool.ntp.org";
+String robotIDPath;
 
 uint32_t milliscounter = 0; 
 uint32_t previousMillis = 0;
@@ -56,15 +58,17 @@ const int updateActivityInterval = UPDATE_REMOTE_STATUS_MILLISECONDS;
 Servo leftServo;
 Servo rightServo;
  
+String firebaseMessage;
 String robotID;
 object_t json;
 JsonWriter writer;
+JsonDocument parsedJson;
 
 void drawUI() {
   display.clearDisplay();
   display.setTextSize(1);
   display.setCursor(2, 2);
-  display.println("Handshakes's Motors");
+  display.println("Handshakes's Information");
 }
 
 void setupWifi() {
@@ -127,6 +131,7 @@ void setup(){
 
   leftServo.attach(LEFT_SERVO_PIN);
   rightServo.attach(RIGHT_SERVO_PIN);
+  robotIDPath = (String)"/robotIDs/" + robotID;
 }
 
 void loop() {
@@ -141,22 +146,29 @@ void loop() {
     if (app.ready())
     {
       milliscounter = millis();
-      
-      if (Database.existed(aClient, "/robotIDs/"+robotID)) 
+
+      if (Database.existed(aClient, robotIDPath)) 
       {
-        leftMotorNum = Database.get<float>(aClient, "/robotIDs/"+robotID+"/leftmotor");
-        rightMotorNum = Database.get<float>(aClient, "/robotIDs/"+robotID+"/rightmotor");
+
+        String resultJson = Database.get<String>(aClient, robotIDPath);
+        deserializeJson(parsedJson, resultJson);
+
+        leftMotorNum = static_cast<float>(parsedJson["leftmotor"]);
+        rightMotorNum = static_cast<float>(parsedJson["rightmotor"]);
+        firebaseMessage = static_cast<const char*>(parsedJson["message"]);
+
         if (milliscounter - previousMillis >  updateActivityInterval || previousMillis == 0) {
           writer.create(json, "lastactive", getTime());
-          Database.update(aClient, "/robotIDs/"+robotID, json);
+          Database.update(aClient, robotIDPath, json);
           previousMillis = milliscounter;
         }
       } 
       else 
       {
-        Database.set<float>(aClient, "/robotIDs/"+robotID+"/leftmotor", MOTOR_STOP_PWM);
-        Database.set<float>(aClient, "/robotIDs/"+robotID+"/rightmotor", MOTOR_STOP_PWM);
-        Database.set<uint32_t>(aClient, "/robotIDs/"+robotID+"/lastactive", getTime());
+        Database.set<float>(aClient, robotIDPath + "/leftmotor", MOTOR_STOP_PWM);
+        Database.set<float>(aClient, robotIDPath + "/rightmotor", MOTOR_STOP_PWM);
+        Database.set<String>(aClient, robotIDPath + "/message", "");
+        Database.set<uint32_t>(aClient, robotIDPath + "/lastactive", getTime());
       }
 
       leftServo.write(leftMotorNum);
@@ -171,7 +183,8 @@ void loop() {
     display.print("Right: ");
     display.println(rightMotorNum);
     display.print("Left: ");
-    display.print(leftMotorNum);
+    display.println(leftMotorNum);
+    display.print("Msg: " + firebaseMessage);
     display.display();
   
 }

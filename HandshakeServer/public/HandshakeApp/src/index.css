@@ -33,6 +33,7 @@ body {
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+  margin-bottom: 0;
 }
 
 button {
@@ -49,9 +50,10 @@ button {
 button:hover {
   border-color: #646cff;
 }
-button:focus,
-button:focus-visible {
+button:active{
   outline: 4px auto -webkit-focus-ring-color;
+  background-color: #646cff5d;
+  transition: background-color 0.15s;
 }
 
 input {

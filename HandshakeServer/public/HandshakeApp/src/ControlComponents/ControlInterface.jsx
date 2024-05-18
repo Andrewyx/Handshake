@@ -1,9 +1,10 @@
 import { child, get, onValue, ref, update } from 'firebase/database';
 import { useEffect, useState } from 'react';
-import { softwareConstants } from './util';
+import { softwareConstants } from '../Util/util';
 import ControlButton from './ControlButton'
 import RobotInfoBox from './RobotInfoBox'
-import FirebaseTools from './FirebaseTools';
+import FirebaseTools from '../Util/FirebaseTools';
+import MessageBox from './MessageBox';
 
 const FIREBASE = FirebaseTools.getInstance();
 
@@ -70,17 +71,23 @@ export default function ControlInterface() {
   
     if (connectedRobotID) {
       return (
-        <div>
-          <div>
-            <label>Robot {connectedRobotID}</label> <br />
-            <label>Status: </label>
-            {robotStatus ? <label id="on">Online</label> : <label id="off">Offline</label>}
+        <>
+          <div id='statusLabels'>
+            <div className='statusLabel'>
+              <label>Robot {connectedRobotID}</label>
+            </div>
+            <div className='statusLabel'>
+              <label>Status: </label>
+              {robotStatus ? <label id="on">Online</label> : <label id="off">Offline</label>}
+            </div>
           </div>
-            <ControlButton name="Drive Left" value={120} path={FIREBASE.dataLeftMotorPath} />
-            <ControlButton name="Drive Right" value={120} path={FIREBASE.dataRightMotorPath} />
-            <RobotInfoBox />
+            <div className='controlInterface'>
+              <ControlButton name="Drive Left" value={120} path={FIREBASE.dataLeftMotorPath} />
+              <ControlButton name="Drive Right" value={120} path={FIREBASE.dataRightMotorPath} />
+            </div>
+            <MessageBox />
           <button onClick={() => { setAndUpdateRobotID(null) }}>Disconnect</button>
-        </div>
+        </>
       )
     }
     else {

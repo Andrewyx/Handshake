@@ -1,5 +1,6 @@
 import { ref, update } from 'firebase/database';
-import FirebaseTools from './FirebaseTools';
+import FirebaseTools from '../Util/FirebaseTools';
+import { hardwareConstants } from '../Util/util';
 
 export default function ControlButton(props) {
     const name = props.name;
@@ -14,7 +15,7 @@ export default function ControlButton(props) {
         update(ref(FIREBASE.db), updates);
     }
     function handleButtonUp() {
-        updates[path] = 95;
+        updates[path] = hardwareConstants.PWM_STOP_VALUE;
         update(ref(FIREBASE.db), updates);
     }
 

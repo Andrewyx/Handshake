@@ -2,7 +2,7 @@
 import { ref, onValue } from 'firebase/database';
 import { useEffect, useState } from "react";
 import ValueIndicator from "./ValueIndicator";
-import FirebaseTools from './FirebaseTools';
+import FirebaseTools from '../Util/FirebaseTools';
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries

@@ -1,9 +1,9 @@
 import './App.css'
 
-import FirebaseTools from './FirebaseTools';
-import { SignInButton, SignOutButton } from './AuthComponents';
+import FirebaseTools from './Util/FirebaseTools';
+import { SignInButton, SignOutButton } from './Util/AuthComponents';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import ControlInterface from './ControlInterface';
+import ControlInterface from './ControlComponents/ControlInterface';
 
 const FIREBASE = FirebaseTools.getInstance();
 

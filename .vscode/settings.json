@@ -1,6 +1,9 @@
 {
     "cmake.configureOnOpen": false,
     "files.associations": {
-        "ctime": "cpp"
-    }
+        "ctime": "cpp",
+        "*.tcc": "cpp",
+        "string": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "enabled"
 }
