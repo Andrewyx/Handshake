@@ -25,14 +25,16 @@ export default function MessageBox() {
 
     return (
         <form onSubmit={sendMessage}>
-            <input 
-                id="robotMessage" 
-                onChange={updateMessage}
-                name="message" 
-                value={txt} 
-                placeholder="Enter Message to Send" 
-            />
-            <button type="submit">Send</button>
+            <div>
+                <textarea 
+                    id="robotMessage" 
+                    onChange={updateMessage}
+                    name="message" 
+                    value={txt} 
+                    placeholder="Enter Message to Send" 
+                />
+                <button type="submit">Send</button>
+            </div>
         </form>
     )
 }

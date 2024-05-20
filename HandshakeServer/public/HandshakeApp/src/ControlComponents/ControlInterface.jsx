@@ -74,11 +74,8 @@ export default function ControlInterface() {
         <>
           <div id='statusLabels'>
             <div className='statusLabel'>
+              {robotStatus ? <div className="greenCircle" id="on"></div> : <div className="redCircle" id="off"></div>}
               <label>Robot {connectedRobotID}</label>
-            </div>
-            <div className='statusLabel'>
-              <label>Status: </label>
-              {robotStatus ? <label id="on">Online</label> : <label id="off">Offline</label>}
             </div>
           </div>
             <div className='controlInterface'>
@@ -86,7 +83,7 @@ export default function ControlInterface() {
               <ControlButton name="Drive Right" value={120} path={FIREBASE.dataRightMotorPath} />
             </div>
             <MessageBox />
-          <button onClick={() => { setAndUpdateRobotID(null) }}>Disconnect</button>
+          <button className="disconnect" onClick={() => { setAndUpdateRobotID(null) }}>Disconnect</button>
         </>
       )
     }

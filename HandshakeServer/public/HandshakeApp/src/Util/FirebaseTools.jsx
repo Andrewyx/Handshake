@@ -40,6 +40,10 @@ export default class FirebaseTools {
         this.provider = new GoogleAuthProvider();
     }
 
+    /**
+     * 
+     * @returns {FirebaseTools}
+     */
     static getInstance() {
         if (this.#instance) {
             return this.#instance;
@@ -49,6 +53,10 @@ export default class FirebaseTools {
         }
     }
 
+    /**
+     * 
+     * @returns {boolean}
+     */
     isUserLoggedIn() {
         if ( this.auth.currentUser != null) {
             this.#uid = this.auth.currentUser.uid;

@@ -10,6 +10,6 @@ export function SignInButton() {
 
 export function SignOutButton() {
     return FIREBASE.auth.currentUser && (
-        <button  className="signButton"  onClick={() => FIREBASE.logout()}>Sign Out</button>
+        <button  className="signOutButton"  onClick={() => FIREBASE.logout()}>Sign Out</button>
     )
 }
