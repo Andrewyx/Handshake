@@ -2,9 +2,10 @@ import { child, get, onValue, ref, update } from 'firebase/database';
 import { useEffect, useState } from 'react';
 import { softwareConstants } from '../Util/util';
 import ControlButton from './ControlButton'
-import RobotInfoBox from './RobotInfoBox'
 import FirebaseTools from '../Util/FirebaseTools';
 import MessageBox from './MessageBox';
+import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
+import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
 
 const FIREBASE = FirebaseTools.getInstance();
 
@@ -79,8 +80,16 @@ export default function ControlInterface() {
             </div>
           </div>
             <div className='controlInterface'>
-              <ControlButton name="Drive Left" value={120} path={FIREBASE.dataLeftMotorPath} />
-              <ControlButton name="Drive Right" value={120} path={FIREBASE.dataRightMotorPath} />
+              <div>
+                <ControlButton value={120} icon={<KeyboardDoubleArrowUpIcon fontSize='large' />} path={FIREBASE.dataLeftMotorPath} />
+                <code>Left Wheel</code>
+                <ControlButton value={70} icon={<KeyboardDoubleArrowDownIcon fontSize='large' />} path={FIREBASE.dataLeftMotorPath} />
+              </div>
+              <div>
+                <ControlButton value={70} icon={<KeyboardDoubleArrowUpIcon fontSize='large' />} path={FIREBASE.dataRightMotorPath} />
+                <code>Right Wheel</code>
+                <ControlButton value={120} icon={<KeyboardDoubleArrowDownIcon fontSize='large' />} path={FIREBASE.dataRightMotorPath} />
+              </div>
             </div>
             <MessageBox />
           <button className="disconnect" onClick={() => { setAndUpdateRobotID(null) }}>Disconnect</button>

@@ -6,6 +6,7 @@ export default function ControlButton(props) {
     const name = props.name;
     const value = props.value;
     const path = props.path;
+    const icon = props.icon;
     const FIREBASE = FirebaseTools.getInstance();
 
     const updates = {};
@@ -21,12 +22,13 @@ export default function ControlButton(props) {
 
     return (
         <>
-            <button
-                onMouseDown={handleButtonDown}
+            <button onMouseDown={handleButtonDown}
                 onMouseUp={handleButtonUp}
                 onTouchStart={handleButtonDown}
-                onTouchEnd={handleButtonUp}
-            >{name}</button>
+                onTouchEnd={handleButtonUp}>
+                {icon}
+                {name}
+            </button>
         </>
     )
 }
