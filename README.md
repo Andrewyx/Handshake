@@ -15,7 +15,7 @@ This project contains two components:
 2) Hardware - This is a huge component ranging from: PCB circuitry, CAD parts, STLs, and all the various manufacturing components (yes this was made in real life)
 
 ## Getting Started- Users
-1) Ensure you have an assembled robot & have the most recent software flashed.
+1) Ensure you have an assembled robot & have the most recent software flashed (Import info VsCode with PlatformIO extension, choose Firebeetle ESP32 then flash).
 2) Follow the on-screen instructions to connect the robot to your local wifi. You must connect to the robot's broadcasted network and go to `192.168.4.1` on it to register your WiFi. 
 3) Log in at https://handshake-664b7.firebaseapp.com/ to access controls.
 4) Enter the unique 5-character ID displayed on the robot's screen to connect. Looks like `XX:XX`.
